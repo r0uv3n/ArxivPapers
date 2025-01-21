@@ -1,5 +1,5 @@
 [project]
-name = "hello-world"
+name = "arxiv-papers"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
@@ -9,7 +9,7 @@ dependencies = [
 ]
 
 [project.scripts]
-hello = "hello_world:hello"
+arxiv-papers = "arxiv-papers:main"
 
 [build-system]
 requires = ["hatchling"]

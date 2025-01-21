@@ -1,7 +1,7 @@
 import pickle
 import argparse
 import openai
-from tex.utils import *
+from tex.utils import remove_oldfiles_samepaper, 
 from htmls.utils import *
 from map.utils import *
 from gpt.utils import *
