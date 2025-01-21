@@ -53,11 +53,18 @@
 
 
   options = {
-    arxiv-papers.package = pkgs.lib.mkOption {
+    arxiv-papers = pkgs.lib.mkOption {
       type = config.lib.types.outputOf lib.types.package;
-      description = "Create audio podcasts from arxiv papers";
-      default = pkgs.buildPythonPackage {
-        format = "pyproject";
+      description = "Generate audio readthrough of ArXiv papers";
+      default = pkgs.python3Packages.buildPythonApplication {
+        pyproject = true;
+        pname = "arxiv-papers";
+        version = "0.1.0";
+        src = ./.;
+        build-system = [
+          pkgs.python3Packages.setuptools
+          pkgs.python3Packages.setuptools-scm
+        ];
       };
 
       defaultText = "ArxivPapers";
