@@ -13,19 +13,26 @@ from difflib import SequenceMatcher
 from sklearn.metrics.pairwise import cosine_similarity
 from sentence_transformers import SentenceTransformer
 
+
 class Matcher:
     def __init__(self, cache_dir):
         # Load tokenizer and model
-        self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', cache_dir=cache_dir)
-        self.model = BertModel.from_pretrained('bert-base-uncased', cache_dir=cache_dir)
+        self.tokenizer = BertTokenizer.from_pretrained(
+            "bert-base-uncased", cache_dir=cache_dir
+        )
+        self.model = BertModel.from_pretrained("bert-base-uncased", cache_dir=cache_dir)
         self.tfidf_vectorizer = TfidfVectorizer()
         self.spacy = spacy.load("en_core_web_lg")
-        self.sent_emb = SentenceTransformer('all-MiniLM-L6-v2', cache_folder=cache_dir)
+        self.sent_emb = SentenceTransformer("all-MiniLM-L6-v2", cache_folder=cache_dir)
 
     def bert_matcher(self, sentences1, sentences2):
         # Tokenize input sentence and convert to tensor
-        inputs1 = self.tokenizer(sentences1, return_tensors="pt", truncation=True, padding=True)
-        inputs2 = self.tokenizer(sentences2, return_tensors="pt", truncation=True, padding=True)
+        inputs1 = self.tokenizer(
+            sentences1, return_tensors="pt", truncation=True, padding=True
+        )
+        inputs2 = self.tokenizer(
+            sentences2, return_tensors="pt", truncation=True, padding=True
+        )
 
         # Extract embeddings
         with torch.no_grad():
@@ -65,7 +72,6 @@ class Matcher:
         seq = torch.argmax(cos_sim_matrix, dim=1).tolist()
 
         return seq
-
 
     def fuzz_matcher(self, sentences1, sentences2):
         seq = []
@@ -113,15 +119,30 @@ class Matcher:
         for i, a in enumerate(sentences1):
             scores = []
             for j, b in enumerate(sentences2):
-                scores.append(cosine_similarity(tfidf_matrix[:len(sentences1)][i], tfidf_matrix[len(sentences1):][j]))
+                scores.append(
+                    cosine_similarity(
+                        tfidf_matrix[: len(sentences1)][i],
+                        tfidf_matrix[len(sentences1) :][j],
+                    )
+                )
 
             ind = np.argmax(scores)
             seq.append(ind)
 
         return seq
 
-
-    def match(self, sentences1, sentences2, minilm=None, bert=None, fuzz=None, spacy=None, diff=None, tfidf=None, pnt=False):
+    def match(
+        self,
+        sentences1,
+        sentences2,
+        minilm=None,
+        bert=None,
+        fuzz=None,
+        spacy=None,
+        diff=None,
+        tfidf=None,
+        pnt=False,
+    ):
         allseq = []
 
         if minilm:
@@ -145,13 +166,15 @@ class Matcher:
         mergedseq = np.array(allseq)
 
         if pnt:
-            print('Individual matches:')
+            print("Individual matches:")
             print(mergedseq)
 
-        #majority voting
-        seq = np.apply_along_axis(lambda x: np.bincount(x).argmax(), axis=0, arr=mergedseq)
+        # majority voting
+        seq = np.apply_along_axis(
+            lambda x: np.bincount(x).argmax(), axis=0, arr=mergedseq
+        )
         if pnt:
-            print('Consensus match:')
+            print("Consensus match:")
             print(seq)
 
         return seq
@@ -162,7 +185,7 @@ def smooth_sequence(L1):
     M = max(L1)
 
     # Initialize memo table with infinities
-    memo = [[float('inf') for _ in range(M + 1)] for _ in range(N)]
+    memo = [[float("inf") for _ in range(M + 1)] for _ in range(N)]
 
     # Base case
     for j in range(M + 1):
@@ -180,7 +203,7 @@ def smooth_sequence(L1):
     last_val = memo[N - 1].index(min(memo[N - 1]))
     L2[N - 1] = last_val
     for i in range(N - 2, -1, -1):
-        min_loss = float('inf')
+        min_loss = float("inf")
         for j in range(last_val + 1):
             if memo[i][j] + abs(L2[i + 1] - last_val) < min_loss:
                 min_loss = memo[i][j] + abs(L2[i + 1] - last_val)
@@ -195,7 +218,7 @@ def smooth_sequence(L1):
 
 def map_text_to_pdfpages(text, pdffile, matcher):
     # extract text from each page
-    pdf_reader = PyPDF2.PdfReader(open(pdffile, 'rb'))
+    pdf_reader = PyPDF2.PdfReader(open(pdffile, "rb"))
     pdf_pages_text = []
     for p in pdf_reader.pages:
         pdf_pages_text.append(p.extract_text())
@@ -203,7 +226,9 @@ def map_text_to_pdfpages(text, pdffile, matcher):
     # splits = re.split('[.]', text)
     splits = sent_tokenize(text)
 
-    seq = matcher.match(splits, pdf_pages_text, bert=True, minilm=True, fuzz=True, diff=True, tfidf=True)
+    seq = matcher.match(
+        splits, pdf_pages_text, bert=True, minilm=True, fuzz=True, diff=True, tfidf=True
+    )
 
     # first is always first page
     seq[0] = 0
@@ -219,11 +244,13 @@ def map_page_to_blocks(pagemap, text, gs, files_dir, pdffile, matcher, display):
     coords = []
 
     for pd_ind, pg_num in enumerate(tqdm(np.unique(pagemap))):
-        page_pdf = f'{os.path.join(files_dir, str(pg_num))}' + '.pdf'
-        page_png = f'{os.path.join(files_dir, str(pg_num))}' + '.png'
+        page_pdf = f"{os.path.join(files_dir, str(pg_num))}" + ".pdf"
+        page_png = f"{os.path.join(files_dir, str(pg_num))}" + ".png"
 
-        os.system(f'{gs} -sDEVICE=pdfwrite -dNOPAUSE -dBATCH -dFirstPage={pg_num + 1} -dLastPage={pg_num + 1} -sOutputFile={page_pdf} {pdffile} {display}')
-        os.system(f'{gs} -sDEVICE=png16m -r400 -o {page_png} {page_pdf} {display}')
+        os.system(
+            f"{gs} -sDEVICE=pdfwrite -dNOPAUSE -dBATCH -dFirstPage={pg_num + 1} -dLastPage={pg_num + 1} -sOutputFile={page_pdf} {pdffile} {display}"
+        )
+        os.system(f"{gs} -sDEVICE=png16m -r400 -o {page_png} {page_pdf} {display}")
 
         doc = fitz.open(page_pdf)
         page = doc[0]
@@ -241,7 +268,17 @@ def map_page_to_blocks(pagemap, text, gs, files_dir, pdffile, matcher, display):
         end = np.where(np.array(pagemap) == pg_num)[0][-1] + 1
         page_text_splits = splits[start:end]
 
-        seq = matcher.match(page_text_splits, good_blocks, bert=True, minilm=True, fuzz=True, spacy=True, diff=True, tfidf=True, pnt=True)
+        seq = matcher.match(
+            page_text_splits,
+            good_blocks,
+            bert=True,
+            minilm=True,
+            fuzz=True,
+            spacy=True,
+            diff=True,
+            tfidf=True,
+            pnt=True,
+        )
 
         smoothed_seq = smooth_sequence(seq)
 

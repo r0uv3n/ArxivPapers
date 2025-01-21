@@ -10,14 +10,14 @@ def remove_oldfiles_samepaper(paper_id):
     if os.path.exists(paper_id):
         os.remove(paper_id)
 
-    files_path = f'{paper_id}_files'
+    files_path = f"{paper_id}_files"
     if os.path.exists(files_path):
         shutil.rmtree(files_path)
 
 
 def download_paper(paper_id):
     file = wget.download(f"https://arxiv.org/e-print/{paper_id}")
-    files_dir = f'{paper_id}_files'
+    files_dir = f"{paper_id}_files"
     os.makedirs(files_dir, exist_ok=True)
 
     with tarfile.open(file) as tar:
@@ -27,17 +27,21 @@ def download_paper(paper_id):
 
 
 def get_tex_files(files_dir):
-    tex_files = glob(os.path.join(files_dir, '*.tex'))
+    tex_files = glob(os.path.join(files_dir, "*.tex"))
     return [os.path.splitext(os.path.basename(c))[0] for c in tex_files]
 
 
 def get_main_source_file(tex_files, files_dir):
     for file in tex_files:
-        with open(os.path.join(files_dir, f'{file}.tex')) as f:
+        with open(os.path.join(files_dir, f"{file}.tex")) as f:
             content = f.read()
 
         # Check for documentclass and begin/end document tags
-        if "\\documentclass" in content and "\\begin{document}" in content and "\\end{document}" in content:
+        if (
+            "\\documentclass" in content
+            and "\\begin{document}" in content
+            and "\\end{document}" in content
+        ):
             return file
 
     return None
@@ -85,17 +89,19 @@ def create_slides(slides, dir_path):
         latex_filename = f"{filename}.tex"
 
         # Save the LaTeX code to a .tex file
-        with open(os.path.join(directory, latex_filename), 'w') as f:
+        with open(os.path.join(directory, latex_filename), "w") as f:
             f.write(full_code)
 
         # Compile using pdflatex
-        subprocess.run(["pdflatex",  "-interaction=nonstopmode", f"{filename}.tex"], cwd=directory)
+        subprocess.run(
+            ["pdflatex", "-interaction=nonstopmode", f"{filename}.tex"], cwd=directory
+        )
 
         print(f"{filename}.pdf generated!")
 
     os.makedirs(dir_path, exist_ok=True)
 
-    for i, slide in enumerate(slides['slides']):
+    for i, slide in enumerate(slides["slides"]):
         title = slide[0]
         points = slide[1:]
         if isinstance(points[0], list):
@@ -105,7 +111,9 @@ def create_slides(slides, dir_path):
         compile_latex_to_pdf(slide_code, directory=dir_path, filename=f"slide_{i+1}")
 
     # List all files in the directory
-    all_files = [f for f in os.listdir(dir_path) if os.path.isfile(os.path.join(dir_path, f))]
+    all_files = [
+        f for f in os.listdir(dir_path) if os.path.isfile(os.path.join(dir_path, f))
+    ]
 
     # List all .pdf files in the directory
     pdf_files = [os.path.basename(f) for f in glob(os.path.join(dir_path, "*.pdf"))]
@@ -117,11 +125,11 @@ def create_slides(slides, dir_path):
     for file in files_to_delete:
         os.remove(os.path.join(dir_path, file))
 
+
 def create_questions(questions, dir_path):
 
     def generate_beamer_slide(question):
-        slide = \
-        '''
+        slide = """
         \\documentclass[20pt]{beamer}\n
         \\usetheme{default}\n
         \\geometry{papersize={8.5in,11in}}
@@ -134,33 +142,35 @@ def create_questions(questions, dir_path):
             \\vfill\n
             \\begin{center}\n
                 \\begin{tikzpicture}\n
-        '''
-        slide += "\\node[draw, rounded corners=5pt, fill=blue!20, minimum width=0.95\\textwidth, " \
-                 "minimum height=2cm, text centered, text width=0.95\\textwidth, inner sep=10pt] (Question) { "\
-                 "\\textbf{\\large %s}};" % question
+        """
+        slide += (
+            "\\node[draw, rounded corners=5pt, fill=blue!20, minimum width=0.95\\textwidth, "
+            "minimum height=2cm, text centered, text width=0.95\\textwidth, inner sep=10pt] (Question) { "
+            "\\textbf{\\large %s}};" % question
+        )
 
-        slide += \
-        '''
+        slide += """
                 \\end{tikzpicture}\n
             \\end{center}\n
             \\vfill\n
         \\end{frame}\n
         \\end{document}\n
-        '''
+        """
 
         return slide
 
     def compile_latex_to_pdf(latex_code, directory, filename="presentation"):
 
         # Save the LaTeX code to a .tex file
-        with open(os.path.join(directory, f"{filename}.tex"), 'w') as f:
+        with open(os.path.join(directory, f"{filename}.tex"), "w") as f:
             f.write(latex_code)
 
         # Compile using pdflatex
-        subprocess.run(["pdflatex", "-interaction=nonstopmode", f"{filename}.tex"], cwd=directory)
+        subprocess.run(
+            ["pdflatex", "-interaction=nonstopmode", f"{filename}.tex"], cwd=directory
+        )
 
         print(f"{filename}.pdf generated!")
-
 
     os.makedirs(dir_path, exist_ok=True)
 
@@ -169,7 +179,9 @@ def create_questions(questions, dir_path):
         compile_latex_to_pdf(slide_code, directory=dir_path, filename=f"question_{i}")
 
     # List all files in the directory
-    all_files = [f for f in os.listdir(dir_path) if os.path.isfile(os.path.join(dir_path, f))]
+    all_files = [
+        f for f in os.listdir(dir_path) if os.path.isfile(os.path.join(dir_path, f))
+    ]
 
     # List all .pdf files in the directory
     pdf_files = [os.path.basename(f) for f in glob(os.path.join(dir_path, "*.pdf"))]
