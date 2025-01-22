@@ -15,7 +15,7 @@
     # processes.cargo-watch.exec = "cargo-watch";
 
     # https://devenv.sh/services/
-    # services.postgres.enable = true;
+    services.postgres.enable = true;
 
     # https://devenv.sh/scripts/
     scripts.hello.exec = ''
@@ -26,12 +26,6 @@
       hello
       git --version
     '';
-
-    # https://devenv.sh/tasks/
-    # tasks = {
-    #   "myproj:setup".exec = "mytool build";
-    #   "devenv:enterShell".after = [ "myproj:setup" ];
-    # };
 
     # https://devenv.sh/tests/
     enterTest = ''
