@@ -1,7 +1,6 @@
 import os
 from PyPDF2 import PdfReader, PdfWriter
 from glob import glob
-import datetime
 import zipfile
 
 

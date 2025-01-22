@@ -27,7 +27,9 @@ def text_to_speech_qa(
             files_dir, f"q_with_silence_{hash(q)}.mp3"
         )
         os.system(
-            f'{ffmpeg} -i {chunk_audio} -f lavfi -t 2 -i anullsrc=r=44100:cl=stereo -filter_complex "[0:a][1:a]concat=n=2:v=0:a=1" {chunk_audio_with_silence}'
+            f'{ffmpeg} -i {chunk_audio} -f lavfi\
+            -t 2 -i anullsrc=r=44100:cl=stereo \
+            -filter_complex "[0:a][1:a]concat=n=2:v=0:a=1" {chunk_audio_with_silence}'
         )
         shutil.move(chunk_audio_with_silence, chunk_audio)
 
@@ -90,7 +92,7 @@ def synthesize_speech(text, tts_client, voice, rate=1.0):
         )
         return response
     except Exception as e:
-        return None
+        raise Warning(f"Failed to synthesize speech: {e}")
 
 
 def text_to_speechvideo(

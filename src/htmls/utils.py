@@ -1,4 +1,3 @@
-import logging
 import os
 import bs4
 from bs4 import BeautifulSoup
@@ -23,19 +22,22 @@ def generate_html(
     os.system(f"{pdflatex} -interaction=nonstopmode {main_file}.tex {display}")
 
     if html_parser == "latex2html":
-        logging.info(f"Started processing with latex2html...")
+        logging.info("Started processing with latex2html...")
         os.system(f"{latex2html} {main_file}.tex {display}")
     else:
-        logging.info(f"Started processing with latexmlc...")
+        logging.info("Started processing with latexmlc...")
         os.system(
-            f"{latexmlc} --timeout=6000 --navigationtoc=context --mathtex --dest=./{main_file}/{main_file}.html {main_file}.tex {display}"
+            f"{latexmlc} --timeout=6000 --navigationtoc=context \
+            --mathtex --dest=./{main_file}/{main_file}.html {main_file}.tex {display}"
         )
 
-    logging.info(f"Done.")
+    logging.info("Done.")
 
     # make sure it is 8.5in x 11in
     os.system(
-        f"{gs} -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/default -dNOPAUSE -dQUIET -dBATCH -dFIXEDMEDIA -dDEVICEWIDTHPOINTS=612 -dDEVICEHEIGHTPOINTS=792 -sOutputFile=tmp.pdf {main_file}.pdf {display}"
+        f"{gs} -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/default\
+        -dNOPAUSE -dQUIET -dBATCH -dFIXEDMEDIA -dDEVICEWIDTHPOINTS=612 \
+        -dDEVICEHEIGHTPOINTS=792 -sOutputFile=tmp.pdf {main_file}.pdf {display}"
     )
     os.replace("tmp.pdf", f"{main_file}.pdf")
 
@@ -88,7 +90,7 @@ def create_nested_dict(ul_element, logging, stop_words):
             if w in title.lower():
                 return nested_dict
 
-        logging.info(f"{title = }")
+        logging.info(f"{title=}")
 
         link = anchor_tag["href"]
         sub_list_element = li.find("ul") or li.find("ol")

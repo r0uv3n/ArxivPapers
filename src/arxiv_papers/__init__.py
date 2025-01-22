@@ -2,13 +2,45 @@ import pickle
 import argparse
 import openai
 import logging
-from tex.utils import *
-from htmls.utils import *
-from map.utils import *
-from gpt.utils import *
-from speech.utils import *
-from zip.utils import *
-from gdrive.utils import *
+import numpy as np
+import os
+import json
+
+from tex.utils import (
+    get_tex_files,
+    remove_oldfiles_samepaper,
+    download_paper,
+    get_main_source_file,
+    create_slides,
+    create_questions,
+)
+from htmls.utils import (
+    generate_html,
+    parse_aux_file,
+    parse_html_file,
+    create_nested_dict,
+    extract_text_recursive,
+    depth_first_search,
+)
+from map.utils import Matcher, map_text_to_pdfpages, map_page_to_blocks
+from gpt.utils import (
+    gpt_short_verbalizer,
+    gpt_qa_verbalizer,
+    gpt_text_verbalizer,
+    gpt_textvideo_verbalizer,
+    sent_tokenize,
+    create_summary,
+)
+from speech.utils import (
+    text_to_speech_qa,
+    text_to_speech_short,
+    text_to_speechvideo,
+    text_to_speech,
+    texttospeech,
+    shutil,
+)
+from zip.utils import crop_pdf, zip_files
+from gdrive.utils import GDrive
 import random
 
 
@@ -42,9 +74,9 @@ def main(args):
     main_file = get_main_source_file(tex_files, files_dir)
 
     if main_file:
-        logging.info(f"Found [{main_file}.tex] as a main source file")
+        logging.info("Found [{main_file}.tex] as a main source file")
     else:
-        logging.info(f"Failed to find main source file. Enter manually:")
+        logging.info("Failed to find main source file. Enter manually:")
         main_file = input()
 
     # ==============================================================================================================
@@ -139,7 +171,7 @@ def main(args):
         with open(os.path.join(files_dir, "original_text_split_pages.txt"), "w") as f:
             splits = sent_tokenize(text)
 
-            for i, p in enumerate(np.unique(pagemap)):
+            for _, p in enumerate(np.unique(pagemap)):
                 start = np.where(np.array(pagemap) == p)[0][0]
                 end = np.where(np.array(pagemap) == p)[0][-1] + 1
                 chunk_text = " ".join(splits[start:end])
@@ -183,10 +215,10 @@ def main(args):
 
         with open(os.path.join(files_dir, "gpt_questions_answers.txt"), "w") as f:
             for q, a in zip(questions, answers):
-                f.write(f"==== Question ====\n\n")
+                f.write("==== Question ====\n\n")
                 f.write(q)
                 f.write("\n\n")
-                f.write(f"==== Answer ====\n\n")
+                f.write("==== Answer ====\n\n")
                 f.write(a)
                 f.write("\n\n")
 
@@ -270,15 +302,16 @@ def main(args):
             files_dir, f"{args.final_audio_file}_short.mp3"
         )
         os.system(
-            f"{args.ffmpeg} -f concat -i {os.path.join(files_dir, args.chunk_mp3_file_list)} "
+            f"{args.ffmpeg} -f concat\
+            -i {os.path.join(files_dir, args.chunk_mp3_file_list)} "
             f"-c copy {final_audio_short} {display}"
         )
 
-        logging.info(f"Created short audio file")
+        logging.info("Created short audio file")
 
         if args.gdrive_id:
             gdrive_client.upload_audio(f"[short] {title}", f"{final_audio_short}")
-            logging.info(f"Uploaded short audio to GDrive")
+            logging.info("Uploaded short audio to GDrive")
 
         create_slides(slides_short, os.path.join(files_dir, "slides"))
 
@@ -303,15 +336,16 @@ def main(args):
 
         final_audio_qa = os.path.join(files_dir, f"{args.final_audio_file}_qa.mp3")
         os.system(
-            f"{args.ffmpeg} -f concat -i {os.path.join(files_dir, args.chunk_mp3_file_list)} "
+            f"{args.ffmpeg} -f concat\
+            -i {os.path.join(files_dir, args.chunk_mp3_file_list)} "
             f"-c copy {final_audio_qa} {display}"
         )
 
-        logging.info(f"Created QA audio file")
+        logging.info("Created QA audio file")
 
         if args.gdrive_id:
             gdrive_client.upload_audio(f"[QA] {title}", f"{final_audio_qa}")
-            logging.info(f"Uploaded QA audio to GDrive")
+            logging.info("Uploaded QA audio to GDrive")
 
     if args.create_video:
         with open(
@@ -337,13 +371,15 @@ def main(args):
 
     final_audio = os.path.join(files_dir, f"{args.final_audio_file}.mp3")
     os.system(
-        f"{args.ffmpeg} -f concat -i {os.path.join(files_dir, args.chunk_mp3_file_list)} -c copy {final_audio} {display}"
+        f"{args.ffmpeg} -f concat\
+        -i {os.path.join(files_dir, args.chunk_mp3_file_list)}\
+        -c copy {final_audio} {display}"
     )
-    logging.info(f"Created audio file")
+    logging.info("Created audio file")
 
     if args.gdrive_id:
         gdrive_client.upload_audio(title, f"{final_audio}")
-        logging.info(f"Uploaded audio to GDrive")
+        logging.info("Uploaded audio to GDrive")
 
     # --------------- SUMMARY -----------------
     create_summary(abstract, title, paper_id, llm_api, args.llm_base, files_dir)

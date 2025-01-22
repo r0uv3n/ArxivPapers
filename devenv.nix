@@ -1,4 +1,9 @@
-{ pkgs, lib, config, inputs, ... }:
+{
+  pkgs,
+  lib,
+  config,
+  ...
+}:
 
 {
   config = {
@@ -44,7 +49,6 @@
 
     # See full reference at https://devenv.sh/reference/options/
   };
-
 
   options = {
     arxiv-papers = pkgs.lib.mkOption {
